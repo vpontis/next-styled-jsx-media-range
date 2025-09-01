@@ -9,9 +9,11 @@ bun install
 bun dev
 ```
 
+Open http://localhost:3000 and inspect the compiled CSS output.
+
 ## Issue
 
-When using styled-jsx with Lightning CSS (`useLightningcss: true` in next.config.mjs), media queries are not being properly processed in the compiled CSS output.
+When using styled-jsx with Lightning CSS (`useLightningcss: true` in next.config.mjs), media queries are being compiled to modern range syntax that's not supported by the browsers specified in browserslist.
 
 ## Configuration
 
@@ -19,13 +21,30 @@ When using styled-jsx with Lightning CSS (`useLightningcss: true` in next.config
 - Lightning CSS enabled via `compiler.styledJsx.useLightningcss: true`
 - Browserslist: `chrome 64, edge 79, firefox 67, opera 51, safari 12`
 
+## The Problem
+
+When you load the page, the compiled CSS shows:
+
+```css
+@media (width<=400px) {
+  .media-query-test.jsx-535b236771676c9 {
+    color: red;
+  }
+}
+```
+
+However, media query range syntax (`width<=400px`) is **not supported in Safari until version 16.4**. Safari 12 (specified in browserslist) doesn't support this syntax.
+
 ## Expected Behavior
 
-The `.media-query-test` element should:
+Lightning CSS should respect the browserslist configuration and compile:
 
-- Be blue on desktop (default)
-- Be red on mobile (max-width: 768px)
+```css
+@media (max-width: 400px);
+```
+
+Instead of the modern range syntax that breaks in Safari 12-15.
 
 ## Actual Behavior
 
-The media query styles are not being applied correctly when Lightning CSS is enabled.
+Lightning CSS is outputting modern range syntax despite the browserslist specifying Safari 12, causing the media query to fail in older Safari versions.
